@@ -4,12 +4,18 @@ class Pacman {
   constructor(xpos, ypos, tileSize) {
     this.xpos = xpos;
     this.ypos = ypos;
+    this.position = this.findPosition();
     this.TILE_SIZE = tileSize;
     this.mouth = "open";
     this.pacman = this.createHTML();
     this.direction = "right";
     this.addListener();
     this.update();
+  }
+
+  findPosition() {
+    const positionXY = [this.xpos / 85, this.ypos / 85];
+    return positionXY;
   }
 
   createHTML() {
@@ -31,23 +37,28 @@ class Pacman {
     if (e.key === "ArrowRight") {
       this.pacman.style.backgroundPositionY = `-3%`;
       this.xpos += this.TILE_SIZE;
+      this.direction = "right";
       this.update();
     }
     if (e.key === "ArrowUp") {
       this.pacman.style.backgroundPositionY = `97%`;
       this.ypos -= this.TILE_SIZE;
+      this.direction = "up";
       this.update();
     }
     if (e.key === "ArrowLeft") {
       this.pacman.style.backgroundPositionY = `29%`;
       this.xpos -= this.TILE_SIZE;
+      this.direction = "left";
       this.update();
     }
     if (e.key === "ArrowDown") {
       this.pacman.style.backgroundPositionY = `197%`;
       this.ypos += this.TILE_SIZE;
+      this.direction = "down";
       this.update();
     }
+    this.position = this.findPosition();
   }
 
   update() {
@@ -88,3 +99,4 @@ stage1.renderTo(document.body);
 
 const pac1 = new Pacman(0, 0, 85);
 pac1.renderTo(document.querySelector(".container"));
+console.log(pac1.position);
