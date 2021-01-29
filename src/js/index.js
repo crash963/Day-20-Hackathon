@@ -10,6 +10,8 @@ class Pacman {
     this.pacman = this.createHTML();
     this.direction = "right";
     this.stage = this.addToStage(stage);
+    this.score = 0;
+    this.isDead = false;
     this.addListener();
     this.update();
   }
@@ -32,14 +34,36 @@ class Pacman {
     });
   }
 
+  deathChance() {
+    const random = Math.floor(Math.random() * 100) + 1;
+    if (random > 50) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  bomb(entity) {
+    entity.unmount();
+    if (!this.deathChance()) {
+      return;
+    }
+    this.pacman.classList.remove("pacboy-active-light");
+    this.pacman.classList.remove("entity--pac");
+    this.pacman.classList.add("entity--tomb");
+    this.isDead = true;
+  }
+
   move(e) {
+    if (this.isDead) return;
     const stageWidth =
       document.querySelector(".stage").getBoundingClientRect().width / 85 - 1;
     const stageHeight =
       document.querySelector(".stage").getBoundingClientRect().height / 85 - 1;
 
-    console.log(stageWidth, stageHeight);
     this.pacman.classList.toggle("pacman--close");
+
+    console.log(this.score);
 
     if (e.key === "ArrowRight") {
       this.pacman.style.backgroundPositionY = `-3%`;
@@ -48,12 +72,19 @@ class Pacman {
       }
       const targetX = this.xpos + this.TILE_SIZE;
       const entity = this.stage.collisionDetection(targetX, this.ypos);
-      console.log(entity);
       if (entity) {
+        console.log(entity);
         if (entity.type === "wall") {
-          return;
+          return false;
+        } else if (entity.type === "apple") {
+          entity.unmount();
+          this.score++;
+        } else if (entity.type === "bomb") {
+          this.bomb(entity);
         }
       }
+
+      console.log("test");
       this.xpos += this.TILE_SIZE;
       this.direction = "right";
       this.update();
@@ -63,6 +94,21 @@ class Pacman {
       if (this.position[1] === 0) {
         return;
       }
+
+      const targetY = this.ypos - this.TILE_SIZE;
+      const entity = this.stage.collisionDetection(this.xpos, targetY);
+      if (entity) {
+        console.log(entity);
+        if (entity.type === "wall") {
+          return false;
+        } else if (entity.type === "apple") {
+          entity.unmount();
+          this.score++;
+        } else if (entity.type === "bomb") {
+          this.bomb(entity);
+        }
+      }
+
       this.ypos -= this.TILE_SIZE;
       this.direction = "up";
       this.update();
@@ -72,6 +118,20 @@ class Pacman {
       if (this.position[0] === 0) {
         return;
       }
+      const targetX = this.xpos - this.TILE_SIZE;
+      const entity = this.stage.collisionDetection(targetX, this.ypos);
+      if (entity) {
+        console.log(entity);
+        if (entity.type === "wall") {
+          return false;
+        } else if (entity.type === "apple") {
+          entity.unmount();
+          this.score++;
+        } else if (entity.type === "bomb") {
+          this.bomb(entity);
+        }
+      }
+
       this.xpos -= this.TILE_SIZE;
       this.direction = "left";
       this.update();
@@ -81,6 +141,20 @@ class Pacman {
       if (this.position[1] === stageHeight) {
         return;
       }
+      const targetY = this.ypos + this.TILE_SIZE;
+      const entity = this.stage.collisionDetection(this.xpos, targetY);
+      if (entity) {
+        console.log(entity);
+        if (entity.type === "wall") {
+          return false;
+        } else if (entity.type === "apple") {
+          entity.unmount();
+          this.score++;
+        } else if (entity.type === "bomb") {
+          this.bomb(entity);
+        }
+      }
+
       this.ypos += this.TILE_SIZE;
       this.direction = "down";
       this.update();
@@ -112,6 +186,10 @@ class Stage {
     this.entities = [];
   }
 
+  getEntities() {
+    return this.entities;
+  }
+
   /* createArray() {
         this.entities = Array.from(document.querySelectorAll(".entity"));
         console.log(this.entities);
@@ -129,20 +207,32 @@ class Stage {
   }
 
   collisionDetection(x, y) {
-    for (let i = 0; i < this.entities.length; i++) {
-      if (this.entities[i].xpos === x && this.entities[i].ypos === y) {
-        return this.entities[i];
-      } else return null;
+    for (let i = 0; i < this.getEntities().length; i++) {
+      if (
+        this.getEntities()[i].xpos * 85 === x &&
+        this.getEntities()[i].ypos * 85 === y
+      ) {
+        return this.getEntities()[i];
+      }
     }
+    return null;
   }
 
   renderTo(el) {
     el.appendChild(this.stage);
   }
 
-  /* addEntity(ent) {
-        this.entities.push(ent); 
-    }*/
+  removeEntity(entity) {
+    this.entities = this.getEntities().filter((arrayEntity) => {
+      if (
+        arrayEntity.xpos === entity.xpos &&
+        arrayEntity.ypos === entity.ypos
+      ) {
+        return false;
+      } else return true;
+    });
+    console.log(this.getEntities());
+  }
 }
 
 class Entity {
@@ -165,24 +255,35 @@ class Entity {
   addToStage(stage) {
     console.log(stage);
     stage.stage.appendChild(this.element);
-    stage.entities.push(this.element);
+    stage.entities.push(this);
     return stage;
   }
 
+  unmount() {
+    console.log(this.stage);
+    this.stage.stage.removeChild(this.element);
+    this.stage.removeEntity(this);
+  }
   /* renderTo(el) {
         el.appendChild(this.element);
     } */
 }
 
-const stage1 = new Stage(6, 7);
+const stage1 = new Stage(10, 10);
 stage1.renderTo(document.body);
 
 const pac1 = new Pacman(0, 0, 85, stage1);
 
-const apple1 = new Entity(1, 1, "apple", stage1);
-
-const w1 = new Entity(1, 3, "wall", stage1);
-
+const w1 = new Entity(1, 1, "wall", stage1);
+const apple1 = new Entity(1, 3, "apple", stage1);
 const b1 = new Entity(5, 5, "bomb", stage1);
+
+const w2 = new Entity(4, 2, "wall", stage1);
+const apple2 = new Entity(7, 2, "apple", stage1);
+const b2 = new Entity(6, 2, "bomb", stage1);
+
+const w3 = new Entity(2, 6, "wall", stage1);
+const apple3 = new Entity(7, 8, "apple", stage1);
+const b3 = new Entity(4, 8, "bomb", stage1);
 
 console.log(stage1.entities);
