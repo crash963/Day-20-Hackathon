@@ -269,21 +269,38 @@ class Entity {
     } */
 }
 
-const stage1 = new Stage(10, 10);
+const stage1 = new Stage(11, 7);
 stage1.renderTo(document.body);
 
 const pac1 = new Pacman(0, 0, 85, stage1);
 
-const w1 = new Entity(1, 1, "wall", stage1);
-const apple1 = new Entity(1, 3, "apple", stage1);
-const b1 = new Entity(5, 5, "bomb", stage1);
+fetch("http://bootcamp.podlomar.org/api/pacman?width=11&height=6")
+  .then((resp) => resp.json())
+  .then((entities) => {
+    console.log(entities);
+    createWalls(entities.walls);
+    createBombs(entities.bombs);
+    createApples(entities.apples);
+  });
 
-const w2 = new Entity(4, 2, "wall", stage1);
-const apple2 = new Entity(7, 2, "apple", stage1);
-const b2 = new Entity(6, 2, "bomb", stage1);
+const entitiesArr = [];
+function createWalls(entities) {
+  for (let entity of entities) {
+    const newEntity = new Entity(entity.x, entity.y, "wall", stage1);
+    entitiesArr.push(newEntity);
+  }
+}
 
-const w3 = new Entity(2, 6, "wall", stage1);
-const apple3 = new Entity(7, 8, "apple", stage1);
-const b3 = new Entity(4, 8, "bomb", stage1);
+function createBombs(entities) {
+  for (let entity of entities) {
+    const newEntity = new Entity(entity.x, entity.y, "bomb", stage1);
+    entitiesArr.push(newEntity);
+  }
+}
 
-console.log(stage1.entities);
+function createApples(entities) {
+  for (let entity of entities) {
+    const newEntity = new Entity(entity.x, entity.y, "apple", stage1);
+    entitiesArr.push(newEntity);
+  }
+}
